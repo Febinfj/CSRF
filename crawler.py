@@ -1,27 +1,15 @@
 import requests
 from bs4 import BeautifulSoup
 
-def csrf_scanner(url):
-    try:
-        response = requests.get(url)
-        response.raise_for_status()  
-    except requests.exceptions.RequestException as e:
-        print(f"Error accessing {url}: {e}")
-        return
+def check_csrf_vulnerability(target_url):
+    response = requests.get(target_url)
+    page_content = BeautifulSoup(response.text, 'html.parser')
 
-    soup = BeautifulSoup(response.text, 'html.parser')
-    forms = soup.find_all('form')
-    csrf_vulnerable = False 
+    form_elements = page_content.find_all('form')
+    for form in form_elements:
+        token_field = form.find('input', {'name': 'csrf_token'})
+        if token_field is None:
+            print(f"Potential CSRF vulnerability detected on: {target_url}")
 
-    for form in forms:
-        csrf_token = form.find('input', {'name': 'csrf_token'})
-        if not csrf_token:
-            print(f"CSRF vulnerability found in form at: {url}")
-            csrf_vulnerable = True
-
-    if not csrf_vulnerable:
-        print(f"No CSRF vulnerabilities found in forms at: {url}")
-
-
-url = 'https://www.example.com'  
-csrf_scanner(url)
+test_url = 'https://www.facebook.com'
+check_csrf_vulnerability(test_url)
